@@ -1,0 +1,32 @@
+name: Test
+on:
+  push:
+    branches:
+      - master
+      - develop
+      - '*.*.*'
+  pull_request:
+jobs:
+  analyze:
+    name: Static analysis (linting)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: v1.42.1
+  test:
+    name: Test
+    needs: analyze
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GITHUB_TOKEN: ${{ secrets.ORG_GITHUB_TOKEN }}
+    steps:
+      - name: Repo Checkout
+        uses: actions/checkout@v2
+      - name: Run Tests
+        run: make test
+      - name: Check Coverage
+        run: make coverage

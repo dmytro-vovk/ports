@@ -1,0 +1,5 @@
+{
+  "grpc_server": {
+    "listen": "storage-api:6001"
+  }
+}

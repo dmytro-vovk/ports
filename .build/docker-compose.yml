@@ -1,0 +1,41 @@
+version: '3'
+
+services:
+  storage-api:
+    networks:
+      - default
+    build:
+      context: ..
+      dockerfile: services/storage-api-server/Dockerfile
+    volumes:
+      - "..:/src"
+    working_dir: /src
+    ports:
+      - "6001:6001"
+
+  rest-api:
+    networks:
+      - default
+    build:
+      context: ..
+      dockerfile: services/rest-api-server/Dockerfile
+    volumes:
+      - "..:/src"
+    working_dir: /src
+    ports:
+      - "5001:5001"
+    deploy:
+      resources:
+        limits:
+          memory: 6M
+
+  test:
+    image: golang:1.17.2
+    depends_on:
+      - storage-api
+      - rest-api
+    volumes:
+      - "..:/src"
+    working_dir: /src
+    command: >
+      sh -c "go test -failfast -race -tags integration -v -p 1 -covermode=atomic -coverprofile=coverage.out ./..."

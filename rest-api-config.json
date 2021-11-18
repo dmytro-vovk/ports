@@ -1,0 +1,8 @@
+{
+  "web_server": {
+    "listen": "rest-api:5001"
+  },
+  "storage_api": {
+    "address": "storage-api:6001"
+  }
+}

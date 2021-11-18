@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package ports;
+option go_package = "services/protocol";
+
+service storage {
+  rpc Store (stream StorePortRequest) returns (Response);
+  rpc Get (GetPortRequest) returns (Data);
+}
+
+message StorePortRequest {
+  map<string, Data> List = 1;
+}
+
+message Data {
+  string Name = 1;
+  string City = 2;
+  string Province = 3;
+  string Country = 4;
+  repeated string Alias = 5;
+  repeated string Regions = 6;
+  string Timezone = 8;
+  repeated string Unlocs = 9;
+  string Code = 10;
+  float Lat = 11;
+  float Lon = 12;
+}
+
+message Response {
+  string Error = 1;
+}
+
+message GetPortRequest {
+  string Name = 1;
+}
