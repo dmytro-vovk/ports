@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 
 	"github.com/dmytro-vovk/ports/services/protocol"
@@ -31,7 +32,7 @@ func (a *API) UploadPorts(w http.ResponseWriter, r *http.Request) {
 	// Get stream of portData from request body
 	dataStream, err := stream.Scan(r.Body, portData{})
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		sendErrorResponse(w, http.StatusBadRequest, err)
 
 		return
 	}
@@ -40,7 +41,7 @@ func (a *API) UploadPorts(w http.ResponseWriter, r *http.Request) {
 	// Read the stream
 	for item := range dataStream {
 		if item.Error != nil {
-			http.Error(w, item.Error.Error(), http.StatusBadRequest)
+			sendErrorResponse(w, http.StatusBadRequest, err)
 
 			return
 		}
@@ -52,7 +53,7 @@ func (a *API) UploadPorts(w http.ResponseWriter, r *http.Request) {
 		}
 		// Send buffered data
 		if err := a.storage.Store(context.Background(), &protocol.StorePortRequest{List: buffer}); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			sendErrorResponse(w, http.StatusBadGateway, err)
 
 			return
 		}
@@ -62,7 +63,7 @@ func (a *API) UploadPorts(w http.ResponseWriter, r *http.Request) {
 	// Send the remaining data
 	if len(buffer) != 0 {
 		if err := a.storage.Store(context.Background(), &protocol.StorePortRequest{List: buffer}); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			sendErrorResponse(w, http.StatusInternalServerError, err)
 
 			return
 		}
@@ -77,7 +78,7 @@ func (a *API) GetPortByID(w http.ResponseWriter, r *http.Request) {
 
 	data, err := a.storage.Get(context.Background(), &protocol.GetPortRequest{Name: id})
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		sendErrorResponse(w, http.StatusBadGateway, err)
 
 		return
 	}
@@ -85,6 +86,18 @@ func (a *API) GetPortByID(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if err := json.NewEncoder(w).Encode(data); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		sendErrorResponse(w, http.StatusInternalServerError, err)
+	}
+}
+
+type errorResponse struct {
+	Error string `json:"error"`
+}
+
+func sendErrorResponse(w http.ResponseWriter, code int, err error) {
+	w.WriteHeader(code)
+
+	if err2 := json.NewEncoder(w).Encode(errorResponse{Error: err.Error()}); err != nil {
+		log.Printf("Error sending error response: %s", err2)
 	}
 }

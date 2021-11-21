@@ -47,13 +47,6 @@ func Scan(r io.Reader, data interface{}) (<-chan Record, error) {
 
 				break
 			}
-			// Ensure the token is string
-			key, ok := token.(string)
-			if !ok {
-				c <- Record{Error: fmt.Errorf("expected string, got %T", token)}
-				// Input is broken, no point to continue
-				break
-			}
 			// Create new instance of data type
 			instance := reflect.New(dataType).Interface()
 			// Decode the value
@@ -64,7 +57,7 @@ func Scan(r io.Reader, data interface{}) (<-chan Record, error) {
 			}
 			// Send it
 			c <- Record{
-				Key:   key,
+				Key:   token.(string),
 				Value: instance,
 			}
 		}
